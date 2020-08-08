@@ -1,0 +1,242 @@
+
+#SYMBOL_NAME "ShadeChangeSettings"
+
+#DEFINE_CONSTANT Delta 1
+#DEFINE_CONSTANT DelayTime 20
+#DEFINE_CONSTANT MaxLevel 100
+#DEFINE_CONSTANT MinLevel 0
+
+
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+                                                                
+DIGITAL_INPUT MorningTime, DayTime, EveningTime, NightTime;
+DIGITAL_INPUT ShadeOpenInput, ShadeCloseInput, ShadePause;
+DIGITAL_INPUT InizilizationByStart;
+
+DIGITAL_OUTPUT Busy0, Busy1; 
+DIGITAL_OUTPUT ShadeOpenOutput, ShadeCloseOutput;
+
+ANALOG_INPUT ShadeLevelMorningInput, ShadeLevelDayInput, ShadeLevelEveningInput, ShadeLevelNightInput;
+ANALOG_INPUT ShadeLevelInput;
+
+ANALOG_OUTPUT ShadeLevelMorningOutput, ShadeLevelDayOutput, ShadeLevelEveningOutput, ShadeLevelNightOutput;
+ANALOG_OUTPUT ShadeLevelOutput; 
+
+INTEGER Pause;
+INTEGER ShadeLevelMorningTemp, ShadeLevelDayTemp, ShadeLevelEveningTemp, ShadeLevelNightTemp; 
+
+Function GetChangingShadeLevel (INTEGER ShadeLevel)
+{
+	Busy0 = 1;
+	
+	while(ShadeLevel != ShadeLevelInput)
+
+	{
+		Delay(DelayTime);
+
+		if(ShadeLevel > ShadeLevelInput)
+		
+			ShadeLevelOutput = ShadeLevelOutput + Delta;
+
+		if(ShadeLevel < ShadeLevelInput)
+
+			ShadeLevelOutput = ShadeLevelOutput - Delta;
+ 	}
+
+	Busy0 = 0;
+
+}
+
+
+Function GetChanging()
+{
+	if(MorningTime)
+    	
+		GetChangingShadeLevel(ShadeLevelMorningTemp);
+
+	if(DayTime)
+    	
+		GetChangingShadeLevel(ShadeLevelDayTemp);
+
+	if(EveningTime)
+    	
+		GetChangingShadeLevel(ShadeLevelEveningTemp);
+
+	if(NightTime)
+    	
+		GetChangingShadeLevel(ShadeLevelNightTemp);   
+}
+
+Integer_Function GetOpening(INTEGER ShadeLevel)
+{
+	
+	Busy1 = 1;
+	
+	while(ShadeLevel < MaxLevel)
+	{
+		if(Pause = 1)
+			Break; 
+
+		Delay(DelayTime);
+		
+		ShadeLevel = ShadeLevel + Delta;
+		
+		ShadeLevelOutput = ShadeLevel;
+
+	}
+
+	Pause = 0;
+
+	Busy1 = 0;
+
+	return(ShadeLevel);
+
+}
+
+Function GetOpeningTime()
+{
+	if(MorningTime)    	
+		
+		ShadeLevelMorningTemp = GetOpening(ShadeLevelMorningTemp);
+		ShadeLevelMorningOutput = ShadeLevelMorningTemp;
+
+	if(DayTime)
+    	
+		ShadeLevelDayTemp = GetOpening(ShadeLevelDayTemp);
+		ShadeLevelDayOutput = ShadeLevelDayTemp;
+
+	if(EveningTime)
+    	
+		ShadeLevelEveningTemp = GetOpening(ShadeLevelEveningTemp);
+		ShadeLevelEveningOutput = ShadeLevelEveningTemp;
+
+	if(NightTime)
+    	
+		ShadeLevelNightTemp = GetOpening(ShadeLevelNightTemp);			
+		ShadeLevelNightOutput = ShadeLevelNightTemp; 
+	
+}
+
+Integer_Function GetClosing(INTEGER ShadeLevel)
+{
+	Busy1 = 1;
+
+	while(ShadeLevel > MinLevel)
+	{
+		if(Pause = 1)
+			Break; 
+
+		Delay(DelayTime);
+		
+		ShadeLevel = ShadeLevel - Delta;
+		
+		ShadeLevelOutput = ShadeLevel;
+
+	}
+
+	Pause = 0;
+
+	Busy1 = 0;
+
+	return(ShadeLevel);
+
+}
+
+Function GetClosingTime()
+{
+	if(MorningTime)    	
+		
+		ShadeLevelMorningTemp = GetClosing(ShadeLevelMorningTemp);
+		ShadeLevelMorningOutput = ShadeLevelMorningTemp;
+
+	if(DayTime)
+    	
+		ShadeLevelDayTemp = GetClosing(ShadeLevelDayTemp);
+		ShadeLevelDayOutput = ShadeLevelDayTemp;
+
+	if(EveningTime)
+    	
+		ShadeLevelEveningTemp = GetClosing(ShadeLevelEveningTemp);
+		ShadeLevelEveningOutput = ShadeLevelEveningTemp;
+
+	if(NightTime)
+    	
+		ShadeLevelNightTemp = GetClosing(ShadeLevelNightTemp);			
+		ShadeLevelNightOutput = ShadeLevelNightTemp;  
+	
+}
+
+
+PUSH MorningTime, DayTime, EveningTime, NightTime
+{
+	GetChanging();
+}
+
+PUSH ShadeOpenInput
+{
+	Pause = 1;
+	Delay(DelayTime);
+	Pause = 0;
+
+	ShadeOpenOutput = 1;
+	GetOpeningTime();
+	ShadeOpenOutput = 0;
+}
+
+PUSH ShadeCloseInput
+{
+	Pause = 1;
+	Delay(DelayTime);
+	Pause = 0;
+
+	ShadeCloseOutput = 1;
+	GetClosingTime();
+	ShadeCloseOutput = 0;
+}
+
+PUSH ShadePause
+{
+	Pause = 1;
+
+}
+
+PUSH InizilizationByStart 
+{
+	
+	if(ShadeLevelMorningInput < MaxLevel)
+		ShadeLevelMorningTemp = ShadeLevelMorningInput;
+
+	else
+		ShadeLevelMorningTemp = MaxLevel;
+
+	ShadeLevelMorningOutput = ShadeLevelMorningTemp;
+	
+	
+	if(ShadeLevelDayInput < MaxLevel)
+		ShadeLevelDayTemp = ShadeLevelDayInput;
+
+	else
+		ShadeLevelDayTemp = MaxLevel;
+
+	ShadeLevelDayOutput = ShadeLevelDayTemp;
+
+
+	if(ShadeLevelEveningInput < MaxLevel)
+		ShadeLevelEveningTemp = ShadeLevelEveningInput;
+
+	else
+		ShadeLevelEveningTemp = MaxLevel;
+	
+	ShadeLevelEveningOutput = ShadeLevelEveningTemp;
+
+
+	if(ShadeLevelNightInput < MaxLevel)
+		ShadeLevelNightTemp = ShadeLevelNightInput;
+
+	else
+		ShadeLevelNightTemp = MaxLevel;
+
+	ShadeLevelNightOutput = ShadeLevelNightTemp;    
+}

@@ -1,0 +1,88 @@
+
+#CATEGORY "16" // Time/Date
+ 
+#DEFINE_CONSTANT Su 0
+#DEFINE_CONSTANT Mo 1
+#DEFINE_CONSTANT Tu 2
+#DEFINE_CONSTANT We 3
+#DEFINE_CONSTANT Th 4
+#DEFINE_CONSTANT Fr 5
+#DEFINE_CONSTANT Sa 6
+
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+STRING_INPUT Clock$[18];
+
+DIGITAL_INPUT Enable;
+
+DIGITAL_INPUT  AlarmSu, AlarmMo, AlarmTu, AlarmWe, AlarmTh, AlarmFr, AlarmSa;
+
+DIGITAL_INPUT AlarmOneTime, AlarmSchedule;
+
+ANALOG_INPUT AlarmHour, AlarmMin; 
+
+DIGITAL_OUTPUT Alarm;
+
+INTEGER CurrHour, CurrMin, CurrDay;
+
+FUNCTION GetAlarmWeekDay(INTEGER WeekDays)
+{
+	CurrHour = GetHourNum();
+	CurrMin = GetMinutesNum();
+	CurrDay = GetDayOfWeekNum(); 
+	
+	if(CurrHour = AlarmHour & CurrMin = AlarmMin & CurrDay = WeekDays)
+		Alarm = 1;
+		
+	else
+		Alarm = 0;
+
+}
+
+FUNCTION GetAlarm()
+{
+	CurrHour = GetHourNum();
+	CurrMin = GetMinutesNum();
+		
+	if(CurrHour = AlarmHour & CurrMin = AlarmMin)
+		Alarm = 1;
+		
+	else
+		Alarm = 0;
+
+}
+
+
+CHANGE Clock$
+{
+
+	if(AlarmSchedule = 1) 	
+	{
+		if(AlarmSu = 1)
+			GetAlarmWeekDay(Su);
+	
+		if(AlarmMo = 1)
+			GetAlarmWeekDay(Mo);
+
+		if(AlarmTu = 1)
+			GetAlarmWeekDay(Tu);
+
+		if(AlarmWe = 1)
+			GetAlarmWeekDay(We);
+
+		if(AlarmTh = 1)
+			GetAlarmWeekDay(Th);
+
+		if(AlarmFr = 1)
+			GetAlarmWeekDay(Fr);
+
+		if(AlarmSa = 1)
+			GetAlarmWeekDay(Sa);
+	}
+
+	if(AlarmOneTime = 1)
+		GetAlarm();  	
+
+}

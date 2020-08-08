@@ -1,0 +1,20 @@
+
+#DEFAULT_NONVOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+
+DIGITAL_INPUT InputToggle;
+ANALOG_INPUT LightLevel;
+
+DIGITAL_OUTPUT LightTurnOn, LightTurnOff;
+
+PUSH InputToggle
+{
+	if(LightLevel = 65535)
+		Pulse(20, LightTurnOff);
+
+	else
+		Pulse(20, LightTurnOn);
+
+}

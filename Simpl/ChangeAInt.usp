@@ -1,0 +1,16 @@
+#DEFINE_CONSTANT PulseTime 50
+
+#CATEGORY "1" // Analog Operations
+
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+ANALOG_INPUT AInt ;
+
+DIGITAL_OUTPUT ChangeAInt;
+
+CHANGE AInt
+{
+    PULSE (PulseTime, ChangeAInt);
+}

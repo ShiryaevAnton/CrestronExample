@@ -1,0 +1,34 @@
+
+#CATEGORY "16" // Time/Date
+
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+STRING_INPUT Clock$[18];
+
+DIGITAL_INPUT Enable;
+
+ANALOG_INPUT AlarmHour, AlarmMin; 
+
+DIGITAL_OUTPUT Alarm;
+
+INTEGER CurrHour, CurrMin;
+
+
+CHANGE Clock$
+{
+ 	
+	CurrHour = GetHourNum();
+	CurrMin = GetMinutesNum();
+
+	if(Enable)
+  	{
+		if(CurrHour = AlarmHour & CurrMin = AlarmMin)
+			Alarm = 1;
+		
+		else
+			Alarm = 0;
+			
+	}
+}

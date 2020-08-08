@@ -1,0 +1,196 @@
+#DEFINE_CONSTANT HourMax 12
+#DEFINE_CONSTANT MinuteMax 59
+#DEFINE_CONSTANT HourMin 1
+#DEFINE_CONSTANT MinuteMin 0
+#DEFINE_CONSTANT Am 0
+#DEFINE_CONSTANT Pm 1
+#DEFINE_CONSTANT HourMax24 23
+#DEFINE_CONSTANT HourMin24 0
+
+
+// #CATEGORY "" 
+#DEFAULT_NONVOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+
+
+DIGITAL_INPUT ChangePm, ChangeAm; 
+DIGITAL_INPUT ScheduleHourUp, ScheduleHourDown, ScheduleMinuteUp, ScheduleMinuteDown; 
+DIGITAL_INPUT InizilizationByStart;
+
+DIGITAL_INPUT AmPmInput;
+
+ANALOG_INPUT ScheduleHourInput, ScheduleMinuteInput, ScheduleHour24Input;
+
+
+DIGITAL_OUTPUT AmPm;
+
+
+
+ANALOG_OUTPUT ScheduleHour, ScheduleMinute, ScheduleHour24;
+
+
+
+//Time
+
+Function CheckAmPm()
+{
+	ProcessLogic();
+
+	if(AmPm)
+		
+		AmPm = Am;
+
+	else
+
+		AmPm = Pm;
+
+}
+
+INTEGER_Function GetHour24(INTEGER Hour24)
+{
+
+	Hour24 = ScheduleHour + 12 * AmPm;
+
+	if(Hour24 = 12)
+		Hour24 = 0;
+
+	if(Hour24 = 24)
+		Hour24 = 12;
+	
+	return(Hour24);	
+}
+
+
+INTEGER_Function HourUp(INTEGER ScheduleHourUp)
+{
+	if(ScheduleHourUp < HourMax)
+	{		
+		ScheduleHourUp = ScheduleHourUp + 1;
+
+		if(ScheduleHourUp = HourMax)
+			
+			CheckAmPm();
+	}
+    
+	else
+    	ScheduleHourUp = HourMin;	
+	
+
+	return(ScheduleHourUp);
+    
+}
+
+INTEGER_Function MinuteUp(INTEGER ScheduleMinuteUp)
+{
+	if(ScheduleMinuteUp < MinuteMax)
+		
+		ScheduleMinuteUp = ScheduleMinuteUp + 1;
+
+	else
+	{
+		ScheduleMinuteUp = MinuteMin;
+		ScheduleHour = HourUp(ScheduleHour);
+//		ScheduleHour24 = HourUp24(ScheduleHour24);
+	}
+	
+	return(ScheduleMinuteUp);
+}
+
+INTEGER_Function HourDown(INTEGER ScheduleHourDown)
+{
+	if(ScheduleHourDown > HourMin)
+	{		
+		ScheduleHourDown = ScheduleHourDown - 1;
+
+	//	if(ScheduleHourDown = HourMax)
+
+	//		CheckAmPm();
+				
+		
+	}
+	
+	else
+	{
+    	ScheduleHourDown = HourMax;
+		CheckAmPm();
+	}
+	
+
+	return(ScheduleHourDown);
+    
+}
+
+INTEGER_Function MinuteDown(INTEGER ScheduleMinuteDown)
+{
+	if(ScheduleMinuteDown > MinuteMin)
+		
+		ScheduleMinuteDown = ScheduleMinuteDown - 1;
+
+	else
+	{
+		ScheduleMinuteDown = MinuteMax;
+		ScheduleHour = HourDown(ScheduleHour);
+//		ScheduleHour24 = HourDown24(ScheduleHour24);
+	}
+	
+	return(ScheduleMinuteDown);
+}
+
+
+
+//Push
+
+PUSH ScheduleHourUp
+{
+	ScheduleHour = HourUp(ScheduleHour);
+	ScheduleHour24 = GetHour24(ScheduleHour);	
+}
+
+PUSH ScheduleHourDown
+{
+	ScheduleHour = HourDown(ScheduleHour);
+	ScheduleHour24 = GetHour24(ScheduleHour);	
+}
+
+PUSH ScheduleMinuteUp
+{
+	ScheduleMinute = MinuteUp(ScheduleMinute);	
+}
+
+PUSH ScheduleMinuteDown
+{
+	ScheduleMinute = MinuteDown(ScheduleMinute);	
+}
+
+PUSH ChangePm, ChangeAm
+{
+	CheckAmPm();
+	ScheduleHour24 = GetHour24(ScheduleHour);
+}
+
+PUSH InizilizationByStart
+{
+	if(ScheduleHourInput < HourMax)
+		ScheduleHour = ScheduleHourInput;
+
+	else
+		ScheduleHour = HourMax;
+
+
+	if(ScheduleMinute < MinuteMax)	
+		ScheduleMinute = ScheduleMinuteInput;
+
+	else
+		ScheduleMinute = MinuteMax;	
+
+
+	if(ScheduleHour24 < HourMax24)
+		ScheduleHour24 = ScheduleHour24Input;
+
+	else
+		ScheduleHour24 = HourMax24;
+
+
+	AmPm = AmPmInput;
+}

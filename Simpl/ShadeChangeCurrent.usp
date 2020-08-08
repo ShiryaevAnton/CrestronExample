@@ -1,0 +1,226 @@
+
+#SYMBOL_NAME "ShadeChangeCurrent"
+
+#DEFINE_CONSTANT Delta 1
+#DEFINE_CONSTANT DelayTime 20
+#DEFINE_CONSTANT MaxLevel 100
+#DEFINE_CONSTANT MinLevel 0
+
+
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+                                                                
+DIGITAL_INPUT MorningTime, DayTime, EveningTime, NightTime;
+DIGITAL_INPUT ShadeOpenInput, ShadeCloseInput, ShadePause;
+DIGITAL_INPUT InizilizationByStart;
+DIGITAL_INPUT ChangeStatus;
+
+DIGITAL_OUTPUT Busy0, Busy1; 
+DIGITAL_OUTPUT ShadeOpenOutput, ShadeCloseOutput;
+
+ANALOG_INPUT ShadeLevelMorningInput, ShadeLevelDayInput, ShadeLevelEveningInput, ShadeLevelNightInput, ShadeLevelBuffer;
+ANALOG_INPUT ShadeLevelInput;
+
+ANALOG_OUTPUT ShadeLevelOutput; 
+
+INTEGER Pause, ChangeTrigger;
+INTEGER ShadeLevelMorningTemp, ShadeLevelDayTemp, ShadeLevelEveningTemp, ShadeLevelNightTemp, ShadeLevelTemp;
+
+Function GetChangingShadeLevel (INTEGER ShadeLevel)
+{
+	Busy0 = 1;
+
+	if(ShadeLevel > ShadeLevelInput)
+		ShadeOpenOutput = 1;
+
+	if(ShadeLevel < ShadeLevelInput)
+		ShadeCloseOutput = 1;
+
+	
+	while(ShadeLevel != ShadeLevelInput)
+
+	{
+		Delay(DelayTime);
+
+		if(ShadeLevel > ShadeLevelInput)
+		
+			ShadeLevelOutput = ShadeLevelOutput + Delta;
+
+		if(ShadeLevel < ShadeLevelInput)
+
+			ShadeLevelOutput = ShadeLevelOutput - Delta;
+ 	}
+
+	Busy0 = 0;
+
+	ShadeOpenOutput = 0;
+	ShadeCloseOutput = 0;
+
+}
+
+
+Function GetPause()
+{
+	Pause = 1;
+	Delay(DelayTime);
+	Pause = 0;
+	
+}
+
+Function GetChanging()
+{
+	if(MorningTime)
+    	
+		GetChangingShadeLevel(ShadeLevelMorningTemp);
+
+	if(DayTime)
+    	
+		GetChangingShadeLevel(ShadeLevelDayTemp);
+
+	if(EveningTime)
+    	
+		GetChangingShadeLevel(ShadeLevelEveningTemp);
+
+	if(NightTime)
+    	
+		GetChangingShadeLevel(ShadeLevelNightTemp);   
+}
+
+Function GetOpening()
+{
+	ShadeOpenOutput = 1;
+	
+	Busy1 = 1;
+
+	ChangeTrigger = 1;
+	
+	while(ShadeLevelOutput < MaxLevel)
+	{
+		if(Pause = 1)
+			Break; 
+
+		Delay(DelayTime);
+		
+		ShadeLevelOutput = ShadeLevelOutput + Delta;
+				
+	}
+
+	Busy1 = 0;
+	
+	ShadeOpenOutput = 0;
+
+}
+
+
+Function GetClosing()
+{
+	ShadeCloseOutput = 1;
+
+	Busy1 = 1;
+
+	ChangeTrigger = 0;
+
+	while(ShadeLevelOutput > MinLevel)
+	{
+		if(Pause = 1)
+			Break; 
+
+		Delay(DelayTime);
+		
+		ShadeLevelOutput = ShadeLevelOutput - Delta;
+		
+	}
+
+	Busy1 = 0;
+
+	ShadeCloseOutput = 0;
+
+		
+}
+
+
+PUSH MorningTime, DayTime, EveningTime, NightTime
+{
+	GetChanging();
+}
+
+PUSH ShadeOpenInput
+{
+    GetPause();
+	
+    GetOpening();
+}
+
+PUSH ShadeCloseInput
+{
+	GetPause();
+
+	GetClosing();
+}
+
+PUSH ShadePause
+{
+	GetPause();
+
+}
+
+PUSH InizilizationByStart 
+{
+	if(ShadeLevelBuffer < MaxLevel)
+		ShadeLevelTemp = ShadeLevelBuffer;
+
+	else
+		ShadeLevelTemp = MaxLevel;
+
+	ShadeLevelOutput = ShadeLevelTemp;	
+}
+     
+
+CHANGE ShadeLevelMorningInput, ShadeLevelDayInput, ShadeLevelEveningInput, ShadeLevelNightInput
+{
+	
+	if(ShadeLevelMorningInput < MaxLevel)
+		ShadeLevelMorningTemp = ShadeLevelMorningInput;
+
+	else
+		ShadeLevelMorningTemp = MaxLevel;
+
+		
+	if(ShadeLevelDayInput < MaxLevel)
+		ShadeLevelDayTemp = ShadeLevelDayInput;
+
+	else
+		ShadeLevelDayTemp = MaxLevel;
+
+
+	if(ShadeLevelEveningInput < MaxLevel)
+		ShadeLevelEveningTemp = ShadeLevelEveningInput;
+
+	else
+		ShadeLevelEveningTemp = MaxLevel;
+	
+
+	if(ShadeLevelNightInput < MaxLevel)
+		ShadeLevelNightTemp = ShadeLevelNightInput;
+
+	else
+		ShadeLevelNightTemp = MaxLevel;
+}
+
+PUSH ChangeStatus
+{
+	if(ChangeTrigger = 0)
+	{	
+	GetPause();
+
+    GetOpening();
+	}
+
+	else
+	{	
+	GetPause();
+
+	GetClosing();
+	}	
+}
